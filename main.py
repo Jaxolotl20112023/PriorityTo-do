@@ -83,7 +83,7 @@ class textField:
         py.draw.rect(self.screen, (255,255,255), self.border)
 
         for lines in range(0,len(tasks)) : 
-            self.d_buttons.append(button(self.screen,50,25,self.x+wrapLength,self.y,"done",15))
+            self.d_buttons.append(button(self.screen,50,25,SCREEN_WIDTH-100,self.y,"done",15))
             self.d_buttons[len(self.d_buttons)-1].draw()
 
             text = self.font.render(tasks[lines][0], True, (0,0,0), wraplength=wrapLength)
@@ -91,10 +91,11 @@ class textField:
 
             new_tasks.append([tasks[lines][0],self.y])
 
-            if len(tasks[lines][0]) >= 6 :
-                moveDown = 30 * round(len(tasks[lines][0]),1) % 6
-            else : 
-                moveDown = 30 
+            # if len(tasks[lines][0]) >= 6 :
+            #     print(tasks[lines][0], " is too long")
+            #     moveDown = 30 * round(len(tasks[lines][0]),1) % 6
+            # else : 
+            moveDown = 35 + round(len(tasks[lines][0]),1)
 
             self.y+=moveDown
 
@@ -109,9 +110,9 @@ screen = py.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 s_color = (196,238,255)
 screen.fill(s_color)
 
-b_addTask = button(screen, 100, 50, SCREEN_WIDTH-150, SCREEN_HEIGHT-100,"Add Task",30)
+b_addTask = button(screen, 100, 50, SCREEN_WIDTH-150, SCREEN_HEIGHT-100,"+",30)
 b_addTask.draw()
-t_textField = textField("hello", screen)
+t_textField = textField("Add a new task!", screen)
 
 tasks = []
 
