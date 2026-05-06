@@ -1,9 +1,12 @@
 import pygame as py
 import PySimpleGUI as psg
+import time  
 
 # constants
 SCREEN_WIDTH = 400
 SCREEN_HEIGHT = 750
+BG_COLOR = (196,238,255)
+B_COLOR = (3,180,255)
 
 # non-constants
 running = True
@@ -20,11 +23,6 @@ class button :
         self.fontSize = fontSize
         
     def draw(self) : 
-        # width = 100
-        # height = 50
-
-        # x = SCREEN_WIDTH/2 - width
-        # y = SCREEN_HEIGHT/2 - height
 
         width = self.width
         height = self.height
@@ -34,23 +32,14 @@ class button :
         content = self.content
         fontSize = self.fontSize
         
-        
-        
         font = py.font.SysFont("Arial", fontSize)
         text = font.render(content, True, (0,0,0))
 
         self.button = py.rect.Rect(x,y,width,height)
         
-        py.draw.rect(screen, (3,180,255), self.button) 
+        py.draw.rect(screen, B_COLOR, self.button) 
         screen.blit(text,(x,y+height/8)) 
-        
-class taskInput : 
-
-    def __init__(self):
-        self.text = psg.popup_get_text("Task: ")
     
-    def get(self): 
-        return self.text
     
 class textField: 
     
@@ -59,66 +48,52 @@ class textField:
         self.screen = screen 
         self.x = 50
         self.y = 50
-        self.wrapLength = 200
+        self.wrapLength = 250
         self.fontSize = 30
 
         self.font = py.font.SysFont("Arial", self.fontSize)
 
-        self.border = py.rect.Rect(self.x,self.y,SCREEN_WIDTH-100,SCREEN_HEIGHT-100)
-        py.draw.rect(self.screen, (255,255,255), self.border)
+        self.text = self.font.render(self.content, True, (0,0,0), wraplength=self.wrapLength)
 
-        text = self.font.render(self.content, True, (0,0,0), wraplength=self.wrapLength)
-        self.screen.blit(text,(self.x,self.y))
+    def add_d_button(self,y) :
+        self.d_button = button(screen,50,25,SCREEN_WIDTH-100,y,"Done",15)
+        self.d_button.draw()
 
-    def change(self, tasks): 
-        self.tasks = tasks
-        content = self.content
-        wrapLength = self.wrapLength
 
-        new_tasks = []
-        self.d_buttons = []
+def popup_input():
+    msg = psg.popup_get_text("Task: ")
+    return str(msg)
 
-        moveDown = self.fontSize
+def displayTasks(y):
 
-        py.draw.rect(self.screen, (255,255,255), self.border)
+    for i in range(0,len(tasks)) : 
 
-        for lines in range(0,len(tasks)) : 
-            self.d_buttons.append(button(self.screen,50,25,SCREEN_WIDTH-100,self.y,"done",15))
-            self.d_buttons[len(self.d_buttons)-1].draw()
+        y += tasks[i-1].text.get_height()+5 
 
-            text = self.font.render(tasks[lines][0], True, (0,0,0), wraplength=wrapLength)
-            self.screen.blit(text,(self.x,self.y))
-
-            new_tasks.append([tasks[lines][0],self.y])
-
-            # if len(tasks[lines][0]) >= 6 :
-            #     print(tasks[lines][0], " is too long")
-            #     moveDown = 30 * round(len(tasks[lines][0]),1) % 6
-            # else : 
-            moveDown = 35 + round(len(tasks[lines][0]),1)
-
-            self.y+=moveDown
-
-        self.y = 50
-
-        return new_tasks
+        # print("y: ", y)
         
-
+        tasks[i].add_d_button(y)
+        text_rect = tasks[i].text.get_rect(topleft=(tasks[i].x,y))
+        py.draw.rect(screen, B_COLOR, text_rect)
+        screen.blit(tasks[i].text,(tasks[i].x,y))
+        
 py.init()
 
 screen = py.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 s_color = (196,238,255)
-screen.fill(s_color)
+screen.fill(BG_COLOR)
 
 b_addTask = button(screen, 100, 50, SCREEN_WIDTH-150, SCREEN_HEIGHT-100,"+",30)
 b_addTask.draw()
 t_textField = textField("Add a new task!", screen)
+task_y = 0
 
 tasks = []
 
 py.display.flip()
 
 while running : 
+    time.sleep(0.1)
 
     for event in py.event.get() :
         if event.type == py.QUIT : 
@@ -128,23 +103,34 @@ while running :
             if b_addTask.button.collidepoint(event.pos) : 
 
                 print("pressed")
-
-                screen.fill(s_color)
-
-                tasks.append([taskInput().get()])
-                tasks = t_textField.change(tasks)
+                tasks.append(textField(popup_input(), screen))
                 print(tasks)
+            else :
+                for d_tasks in tasks: 
+                    if d_tasks.d_button.button.collidepoint(event.pos) :
+                        tasks.remove(d_tasks)
 
-            if t_textField.border.collidepoint(event.pos) : 
-                for i in range(0,len(t_textField.d_buttons)) :
-                    if t_textField.d_buttons[i].button.collidepoint(event.pos) :
-                        print(t_textField.d_buttons[i].y)
-                        del tasks[i]
-                        print(tasks)
-                        tasks = t_textField.change(tasks)
+        
+        if event.type == py.MOUSEWHEEL: 
+            print(event.y)
+            if event.y < 0: 
+                # print('down')
+                task_y -= 50
+            
+            if event.y > 0:
+                # print('up')
+                task_y += 50
 
-                        break
+        screen.fill(s_color)
+        displayTasks(task_y)
 
+        
+
+
+            
+                    
+    
     b_addTask.draw()
+
     py.display.update()
                                 
