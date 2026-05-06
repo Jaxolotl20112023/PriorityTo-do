@@ -91,10 +91,6 @@ class textField:
 
             new_tasks.append([tasks[lines][0],self.y])
 
-            # if len(tasks[lines][0]) >= 6 :
-            #     print(tasks[lines][0], " is too long")
-            #     moveDown = 30 * round(len(tasks[lines][0]),1) % 6
-            # else : 
             moveDown = 35 + round(len(tasks[lines][0]),1)
 
             self.y+=moveDown
