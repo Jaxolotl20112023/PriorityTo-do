@@ -38,7 +38,7 @@ class button :
         self.button = py.rect.Rect(x,y,width,height)
         
         py.draw.rect(screen, B_COLOR, self.button) 
-        screen.blit(text,(x,y+height/8)) 
+        screen.blit(text,(x+(width/2-text.get_rect().width/2), y+(height/2-text.get_rect().height/2))) 
     
     
 class textField: 
@@ -55,10 +55,19 @@ class textField:
 
         self.text = self.font.render(self.content, True, (0,0,0), wraplength=self.wrapLength)
 
+        
+
     def add_d_button(self,y) :
         self.d_button = button(screen,50,25,SCREEN_WIDTH-100,y,"Done",15)
         self.d_button.draw()
 
+class frame : 
+
+    def __init__(self, screen):
+        self.screen = screen
+        
+        self.frame = py.rect.Rect(50,50,SCREEN_WIDTH, SCREEN_HEIGHT)
+        py.draw.rect(self.screen, (0,0,0), self.frame)
 
 def popup_input():
     msg = psg.popup_get_text("Task: ")
@@ -68,7 +77,8 @@ def displayTasks(y):
 
     for i in range(0,len(tasks)) : 
 
-        y += tasks[i-1].text.get_height()+5 
+        if i != 0 :
+            y += tasks[i-1].text.get_height()+5 
 
         # print("y: ", y)
         
@@ -84,7 +94,6 @@ s_color = (196,238,255)
 screen.fill(BG_COLOR)
 
 b_addTask = button(screen, 100, 50, SCREEN_WIDTH-150, SCREEN_HEIGHT-100,"+",30)
-b_addTask.draw()
 t_textField = textField("Add a new task!", screen)
 task_y = 0
 
@@ -93,13 +102,24 @@ tasks = []
 py.display.flip()
 
 while running : 
-    time.sleep(0.1)
 
     for event in py.event.get() :
         if event.type == py.QUIT : 
             running = False; 
+        
+        if event.type == py.MOUSEWHEEL: 
+            if event.y < 0: 
+                # print('down')
+                task_y -= 50
+            elif event.y > 0:
+                # print('up')
+                task_y += 50
 
-        if event.type == py.MOUSEBUTTONDOWN : 
+            continue
+
+                
+        if event.type == py.MOUSEBUTTONUP: 
+            print(tasks)
             if b_addTask.button.collidepoint(event.pos) : 
 
                 print("pressed")
@@ -111,24 +131,10 @@ while running :
                         tasks.remove(d_tasks)
 
         
-        if event.type == py.MOUSEWHEEL: 
-            print(event.y)
-            if event.y < 0: 
-                # print('down')
-                task_y -= 50
-            
-            if event.y > 0:
-                # print('up')
-                task_y += 50
+        
 
         screen.fill(s_color)
         displayTasks(task_y)
-
-        
-
-
-            
-                    
     
     b_addTask.draw()
 
