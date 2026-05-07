@@ -38,7 +38,7 @@ class button :
         self.button = py.rect.Rect(x,y,width,height)
         
         py.draw.rect(screen, B_COLOR, self.button) 
-        screen.blit(text,(x+(width/2-text.get_rect().width/2), y+(height/2-text.get_rect().height/2))) 
+        screen.blit(text,(x+self.width/2-text.get_rect().width/2,y+self.height/2-text.get_rect().height/2)) 
     
     
 class textField: 
@@ -61,13 +61,29 @@ class textField:
         self.d_button = button(screen,50,25,SCREEN_WIDTH-100,y,"Done",15)
         self.d_button.draw()
 
-class frame : 
-
+class scroll_able:
+     
     def __init__(self, screen):
         self.screen = screen
+        self.bg_width = SCREEN_WIDTH - 100
+        self.bg_height = SCREEN_HEIGHT - 50
         
-        self.frame = py.rect.Rect(50,50,SCREEN_WIDTH, SCREEN_HEIGHT)
-        py.draw.rect(self.screen, (0,0,0), self.frame)
+        self.si_width = 10
+        self.si_height = 40
+
+    def set(self,y):
+
+        self.background = py.rect.Rect(50,25,self.bg_width,self.bg_height)
+        self.scroll_indicator = py.rect.Rect(SCREEN_WIDTH-self.si_width,y,self.si_width,self.si_height)
+
+        self.draw()
+
+    def draw(self):
+        screen = self.screen
+
+        py.draw.rect(screen, (255,255,255), self.background)
+        py.draw.rect(screen, (146,146,146), self.scroll_indicator)
+
 
 def popup_input():
     msg = psg.popup_get_text("Task: ")
@@ -95,31 +111,37 @@ screen.fill(BG_COLOR)
 
 b_addTask = button(screen, 100, 50, SCREEN_WIDTH-150, SCREEN_HEIGHT-100,"+",30)
 t_textField = textField("Add a new task!", screen)
-task_y = 0
+s_scroll = scroll_able(screen); 
+
+task_y = 25
 
 tasks = []
 
 py.display.flip()
 
 while running : 
+    # time.sleep(0.1)
 
     for event in py.event.get() :
         if event.type == py.QUIT : 
             running = False; 
         
         if event.type == py.MOUSEWHEEL: 
+            print(event.y)
             if event.y < 0: 
                 # print('down')
                 task_y -= 50
-            elif event.y > 0:
+            
+            if event.y > 0:
                 # print('up')
                 task_y += 50
 
+            if task_y < 25 :
+                task_y = 25
+            
             continue
 
-                
-        if event.type == py.MOUSEBUTTONUP: 
-            print(tasks)
+        if event.type == py.MOUSEBUTTONUP : 
             if b_addTask.button.collidepoint(event.pos) : 
 
                 print("pressed")
@@ -133,8 +155,9 @@ while running :
         
         
 
-        screen.fill(s_color)
-        displayTasks(task_y)
+    screen.fill(s_color)
+    s_scroll.set(task_y)
+    displayTasks(task_y)
     
     b_addTask.draw()
 
