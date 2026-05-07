@@ -38,7 +38,7 @@ class button :
         self.button = py.rect.Rect(x,y,width,height)
         
         py.draw.rect(screen, B_COLOR, self.button) 
-        screen.blit(text,(x,y+height/8)) 
+        screen.blit(text,(x+self.width/2-text.get_rect().width/2,y+self.height/2-text.get_rect().height/2)) 
     
     
 class textField: 
@@ -59,6 +59,25 @@ class textField:
         self.d_button = button(screen,50,25,SCREEN_WIDTH-100,y,"Done",15)
         self.d_button.draw()
 
+class scroll_able:
+     
+    def __init__(self, screen):
+        self.screen = screen
+        self.bg_width = SCREEN_WIDTH - 100
+        self.bg_height = SCREEN_HEIGHT - 50
+        
+        self.si_width = 10
+        self.si_height = 15
+
+        self.background = py.rect.Rect(0,0,self.bg_width,self.bg_height)
+        self.scroll_indicator = py.rect.Rect(self.bg_width-self.si_width,50,self.bg_width,self.bg_height)
+
+    def draw(self):
+        screen = self.screen
+
+        py.draw.rect(screen, (0,0,0), self.background)
+        py.draw.rect(screen, (146,146,146), self.scroll_indicator)
+
 
 def popup_input():
     msg = psg.popup_get_text("Task: ")
@@ -68,7 +87,8 @@ def displayTasks(y):
 
     for i in range(0,len(tasks)) : 
 
-        y += tasks[i-1].text.get_height()+5 
+        if i != 0 :
+            y += tasks[i-1].text.get_height()+5 
 
         # print("y: ", y)
         
@@ -86,6 +106,8 @@ screen.fill(BG_COLOR)
 b_addTask = button(screen, 100, 50, SCREEN_WIDTH-150, SCREEN_HEIGHT-100,"+",30)
 b_addTask.draw()
 t_textField = textField("Add a new task!", screen)
+s_scroll = scroll_able(screen); 
+
 task_y = 0
 
 tasks = []
@@ -93,13 +115,13 @@ tasks = []
 py.display.flip()
 
 while running : 
-    time.sleep(0.1)
+    # time.sleep(0.1)
 
     for event in py.event.get() :
         if event.type == py.QUIT : 
             running = False; 
 
-        if event.type == py.MOUSEBUTTONDOWN : 
+        if event.type == py.MOUSEBUTTONUP : 
             if b_addTask.button.collidepoint(event.pos) : 
 
                 print("pressed")
@@ -121,6 +143,7 @@ while running :
                 # print('up')
                 task_y += 50
 
+        s_scroll.draw()
         screen.fill(s_color)
         displayTasks(task_y)
 
