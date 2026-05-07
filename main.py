@@ -67,15 +67,19 @@ class scroll_able:
         self.bg_height = SCREEN_HEIGHT - 50
         
         self.si_width = 10
-        self.si_height = 15
+        self.si_height = 40
 
-        self.background = py.rect.Rect(0,0,self.bg_width,self.bg_height)
-        self.scroll_indicator = py.rect.Rect(self.bg_width-self.si_width,50,self.bg_width,self.bg_height)
+    def set(self,y):
+
+        self.background = py.rect.Rect(50,25,self.bg_width,self.bg_height)
+        self.scroll_indicator = py.rect.Rect(SCREEN_WIDTH-self.si_width,y,self.si_width,self.si_height)
+
+        self.draw()
 
     def draw(self):
         screen = self.screen
 
-        py.draw.rect(screen, (0,0,0), self.background)
+        py.draw.rect(screen, (255,255,255), self.background)
         py.draw.rect(screen, (146,146,146), self.scroll_indicator)
 
 
@@ -108,7 +112,7 @@ b_addTask.draw()
 t_textField = textField("Add a new task!", screen)
 s_scroll = scroll_able(screen); 
 
-task_y = 0
+task_y = 25
 
 tasks = []
 
@@ -120,6 +124,21 @@ while running :
     for event in py.event.get() :
         if event.type == py.QUIT : 
             running = False; 
+        
+        if event.type == py.MOUSEWHEEL: 
+            print(event.y)
+            if event.y < 0: 
+                # print('down')
+                task_y -= 50
+            
+            if event.y > 0:
+                # print('up')
+                task_y += 50
+
+            if task_y < 25 :
+                task_y = 25
+            
+            continue
 
         if event.type == py.MOUSEBUTTONUP : 
             if b_addTask.button.collidepoint(event.pos) : 
@@ -133,25 +152,11 @@ while running :
                         tasks.remove(d_tasks)
 
         
-        if event.type == py.MOUSEWHEEL: 
-            print(event.y)
-            if event.y < 0: 
-                # print('down')
-                task_y -= 50
-            
-            if event.y > 0:
-                # print('up')
-                task_y += 50
-
-        s_scroll.draw()
-        screen.fill(s_color)
-        displayTasks(task_y)
-
         
 
-
-            
-                    
+    screen.fill(s_color)
+    s_scroll.set(task_y)
+    displayTasks(task_y)
     
     b_addTask.draw()
 
