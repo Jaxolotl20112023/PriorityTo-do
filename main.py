@@ -69,7 +69,7 @@ class scroll_able:
         self.bg_height = SCREEN_HEIGHT - 50
         
         self.si_width = 10
-        self.si_height = 40
+        self.si_height = 100
 
     def set(self,y):
 
@@ -89,19 +89,35 @@ def popup_input():
     msg = psg.popup_get_text("Task: ")
     return str(msg)
 
-def displayTasks(y):
+
+def displayTasks() : 
+    for i in range(0,len(tasks)) :
+
+        print("i tasks y: ", tasks[i][1])
+
+        tasks[i][0].add_d_button(tasks[i][1])
+        text_rect = tasks[i][0].text.get_rect(topleft=(tasks[i][0].x,tasks[i][1]))
+
+        py.draw.rect(screen, B_COLOR, text_rect)
+        screen.blit(tasks[i][0].text,(tasks[i][0].x,tasks[i][1]))
+
+def updateTasks(y):
 
     for i in range(0,len(tasks)) : 
 
         if i != 0 :
-            y += tasks[i-1].text.get_height()+5 
+            y += tasks[i-1][0].text.get_height()+5 
+
+        tasks[i][0].y = y
+        tasks[i][1] = y
 
         # print("y: ", y)
         
-        tasks[i].add_d_button(y)
-        text_rect = tasks[i].text.get_rect(topleft=(tasks[i].x,y))
-        py.draw.rect(screen, B_COLOR, text_rect)
-        screen.blit(tasks[i].text,(tasks[i].x,y))
+        # tasks[i][0].add_d_button(y)
+        # text_rect = tasks[i][0].text.get_rect(topleft=(tasks[i][0].x,y))
+
+        # py.draw.rect(screen, B_COLOR, text_rect)
+        # screen.blit(tasks[i][0].text,(tasks[i][0].x,y))
         
 py.init()
 
@@ -112,6 +128,8 @@ screen.fill(BG_COLOR)
 b_addTask = button(screen, 100, 50, SCREEN_WIDTH-150, SCREEN_HEIGHT-100,"+",30)
 t_textField = textField("Add a new task!", screen)
 s_scroll = scroll_able(screen); 
+
+running = True
 
 task_y = 25
 
@@ -136,28 +154,29 @@ while running :
                 # print('up')
                 task_y += 50
 
-            if task_y < 25 :
-                task_y = 25
-            
+            if task_y < tasks[len(tasks)-1][0].y :
+                print(tasks[len(tasks)-1][0].y)
+                task_y =  tasks[len(tasks)-1][0].y
+
             continue
 
         if event.type == py.MOUSEBUTTONUP : 
             if b_addTask.button.collidepoint(event.pos) : 
 
                 print("pressed")
-                tasks.append(textField(popup_input(), screen))
+                tasks.append([textField(popup_input(), screen),0])
                 print(tasks)
+
+                screen.fill(s_color)
+                updateTasks(task_y)
             else :
                 for d_tasks in tasks: 
-                    if d_tasks.d_button.button.collidepoint(event.pos) :
+                    if d_tasks[0].d_button.button.collidepoint(event.pos) :
                         tasks.remove(d_tasks)
 
-        
-        
-
+    displayTasks()
     screen.fill(s_color)
     s_scroll.set(task_y)
-    displayTasks(task_y)
     
     b_addTask.draw()
 
