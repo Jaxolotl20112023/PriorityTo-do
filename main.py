@@ -97,7 +97,7 @@ class productive_bar() :
         self.container_y = 50
 
         self.inner_width = 25
-        self.inner_height = 0 # this means it's full: self.container_height-10 
+        self.inner_height = 1 # this means it's full: self.container_height-10 
         self.inner_x = self.container_x+(self.container_width-self.inner_width)/2
         self.inner_y = 55
     
@@ -129,7 +129,13 @@ def updateTasks(y):
         
         tasks[i].add_d_button(y)
         tasks[i].set()
-        
+
+def bar_percentage() :
+    p_bar.inner_height = (p_bar.container_height-10)*(total_tasks-len(tasks))/total_tasks
+    p_bar.set()
+    print("percentage: ",(p_bar.container_height-10)*(total_tasks-len(tasks))/total_tasks)
+
+
 py.init()
 
 screen = py.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -143,6 +149,7 @@ p_bar = productive_bar()
 p_bar.set()
 
 task_height = 0
+total_tasks = 0
 
 running = True
 
@@ -169,7 +176,8 @@ while running :
                 # print('up')
                 task_y += 50
 
-            if task_y > -25 :
+            print(task_y)
+            if task_y > -25:
                 task_y = 25
 
             continue
@@ -179,15 +187,20 @@ while running :
 
                 print("pressed")
                 tasks.append(textField(popup_input()))
+
+                total_tasks += 1
+                bar_percentage()
                 print(tasks)
 
                 
             else :
                 for d_tasks in tasks: 
                     if d_tasks.d_button.button.collidepoint(event.pos) :
-                        p_bar.inner_height += 10
-                        p_bar.set()
                         tasks.remove(d_tasks)
+                        bar_percentage()
+                        print(total_tasks)
+                        print(len(tasks))
+                        
 
     screen.fill(s_color)
     s_scroll.set(-task_y)
