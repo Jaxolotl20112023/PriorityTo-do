@@ -13,8 +13,7 @@ running = True
 
 class button : 
 
-    def __init__(self, screen, width, height, x, y, content, fontSize):
-        self.screen = screen
+    def __init__(self, width, height, x, y, content, fontSize):
         self.width = width
         self.height = height
         self.x = x 
@@ -28,7 +27,6 @@ class button :
         height = self.height
         x = self.x
         y = self.y 
-        screen = self.screen
         content = self.content
         fontSize = self.fontSize
         
@@ -43,28 +41,35 @@ class button :
     
 class textField: 
     
-    def __init__(self, content,screen):
+    def __init__(self, content):
         self.content = content
-        self.screen = screen 
         self.x = 50
         self.y = 50
         self.wrapLength = 250
         self.fontSize = 30
 
         self.font = py.font.SysFont("Arial", self.fontSize)
-
         self.text = self.font.render(self.content, True, (0,0,0), wraplength=self.wrapLength)
 
-        
+    def set(self) :
+        x = self.x
+        y = self.y
+        text = self.text
+
+        text_rect = text.get_rect(topleft=(x,y))
+
+        py.draw.rect(screen, B_COLOR, text_rect)
+        screen.blit(text,(x,y))
 
     def add_d_button(self,y) :
-        self.d_button = button(screen,50,25,SCREEN_WIDTH-100,y,"Done",15)
+        self.y = y
+
+        self.d_button = button(50,25,SCREEN_WIDTH-100,y,"Done",15)
         self.d_button.draw()
 
 class scroll_able:
      
-    def __init__(self, screen):
-        self.screen = screen
+    def __init__(self):
         self.bg_width = SCREEN_WIDTH - 100
         self.bg_height = SCREEN_HEIGHT - 50
         
@@ -74,50 +79,56 @@ class scroll_able:
     def set(self,y):
 
         self.background = py.rect.Rect(50,25,self.bg_width,self.bg_height)
-        self.scroll_indicator = py.rect.Rect(SCREEN_WIDTH-self.si_width,y,self.si_width,self.si_height)
+        self.scroll_indicator = py.rect.Rect(SCREEN_WIDTH-50-self.si_width,y,self.si_width,self.si_height)
 
         self.draw()
 
     def draw(self):
-        screen = self.screen
 
         py.draw.rect(screen, (255,255,255), self.background)
         py.draw.rect(screen, (146,146,146), self.scroll_indicator)
+
+class productive_bar() :
+
+    def __init__(self):
+        self.container_width = 35
+        self.container_height = 400
+        self.container_x = SCREEN_WIDTH-self.container_width
+        self.container_y = 50
+
+        self.inner_width = 25
+        self.inner_height = 0 # this means it's full: self.container_height-10 
+        self.inner_x = self.container_x+(self.container_width-self.inner_width)/2
+        self.inner_y = 55
+    
+    def set(self): 
+        self.container_rect = py.rect.Rect(self.container_x, self.container_y, self.container_width, self.container_height)
+        self.inner_rect = py.rect.Rect(self.inner_x, self.inner_y, self.inner_width, self.inner_height)
+
+    def draw(self):
+
+        py.draw.rect(screen, (0,0,0),self.container_rect)
+        py.draw.rect(screen, (0,255,0),self.inner_rect)
 
 
 def popup_input():
     msg = psg.popup_get_text("Task: ")
     return str(msg)
 
-
-def displayTasks() : 
-    for i in range(0,len(tasks)) :
-
-        print("i tasks y: ", tasks[i][1])
-
-        tasks[i][0].add_d_button(tasks[i][1])
-        text_rect = tasks[i][0].text.get_rect(topleft=(tasks[i][0].x,tasks[i][1]))
-
-        py.draw.rect(screen, B_COLOR, text_rect)
-        screen.blit(tasks[i][0].text,(tasks[i][0].x,tasks[i][1]))
-
 def updateTasks(y):
 
     for i in range(0,len(tasks)) : 
 
         if i != 0 :
-            y += tasks[i-1][0].text.get_height()+5 
+            y += tasks[i-1].text.get_height()+5 
 
-        tasks[i][0].y = y
-        tasks[i][1] = y
+        tasks[i].y = y
+        # tasks[i][1] = y
 
         # print("y: ", y)
         
-        # tasks[i][0].add_d_button(y)
-        # text_rect = tasks[i][0].text.get_rect(topleft=(tasks[i][0].x,y))
-
-        # py.draw.rect(screen, B_COLOR, text_rect)
-        # screen.blit(tasks[i][0].text,(tasks[i][0].x,y))
+        tasks[i].add_d_button(y)
+        tasks[i].set()
         
 py.init()
 
@@ -125,9 +136,13 @@ screen = py.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 s_color = (196,238,255)
 screen.fill(BG_COLOR)
 
-b_addTask = button(screen, 100, 50, SCREEN_WIDTH-150, SCREEN_HEIGHT-100,"+",30)
-t_textField = textField("Add a new task!", screen)
-s_scroll = scroll_able(screen); 
+b_addTask = button(100, 50, SCREEN_WIDTH-150, SCREEN_HEIGHT-100,"+",30)
+t_textField = textField("Add a new task!")
+s_scroll = scroll_able(); 
+p_bar = productive_bar()
+p_bar.set()
+
+task_height = 0
 
 running = True
 
@@ -154,9 +169,8 @@ while running :
                 # print('up')
                 task_y += 50
 
-            if task_y < tasks[len(tasks)-1][0].y :
-                print(tasks[len(tasks)-1][0].y)
-                task_y =  tasks[len(tasks)-1][0].y
+            if task_y > -25 :
+                task_y = 25
 
             continue
 
@@ -164,21 +178,22 @@ while running :
             if b_addTask.button.collidepoint(event.pos) : 
 
                 print("pressed")
-                tasks.append([textField(popup_input(), screen),0])
+                tasks.append(textField(popup_input()))
                 print(tasks)
 
-                screen.fill(s_color)
-                updateTasks(task_y)
+                
             else :
                 for d_tasks in tasks: 
-                    if d_tasks[0].d_button.button.collidepoint(event.pos) :
+                    if d_tasks.d_button.button.collidepoint(event.pos) :
+                        p_bar.inner_height += 10
+                        p_bar.set()
                         tasks.remove(d_tasks)
 
-    displayTasks()
     screen.fill(s_color)
-    s_scroll.set(task_y)
-    
+    s_scroll.set(-task_y)
     b_addTask.draw()
+    updateTasks(task_y)
+    p_bar.draw()
 
     py.display.update()
                                 
