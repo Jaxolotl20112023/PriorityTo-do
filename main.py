@@ -172,16 +172,13 @@ def bar_percentage() :
     p_bar.set()
     print("percentage: ",(p_bar.container_height-10)*(total_tasks-len(tasks))/total_tasks)
 
-data_saver = pd.read_csv("saveFile")
-
-tasks = data_saver["Tasks_list"]
-
-# try: 
-    
-# except: 
-#     print("empty save file")
-#     data_saver = save_data()
-#     tasks = []
+try: 
+    data_saver = pd.read_csv("saveFile")
+    tasks = data_saver["Tasks_list"]
+except: 
+    print("empty save")
+    data_saver = save_data()
+    tasks = []
 
 currentTime = date.today()
 print(currentTime)
