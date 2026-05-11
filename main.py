@@ -1,6 +1,8 @@
 import pygame as py
 import PySimpleGUI as psg
 import time  
+from datetime import date
+import pandas as pd
 
 # constants
 SCREEN_WIDTH = 400
@@ -88,7 +90,7 @@ class scroll_able:
         py.draw.rect(screen, (255,255,255), self.background)
         py.draw.rect(screen, (146,146,146), self.scroll_indicator)
 
-class productive_bar() :
+class progress_bar() :
 
     def __init__(self):
         self.container_width = 35
@@ -99,7 +101,7 @@ class productive_bar() :
         self.inner_width = 25
         self.inner_height = 1 # this means it's full: self.container_height-10 
         self.inner_x = self.container_x+(self.container_width-self.inner_width)/2
-        self.inner_y = 55
+        self.inner_y = self.container_y + 5
     
     def set(self): 
         self.container_rect = py.rect.Rect(self.container_x, self.container_y, self.container_width, self.container_height)
@@ -110,6 +112,41 @@ class productive_bar() :
         py.draw.rect(screen, (0,0,0),self.container_rect)
         py.draw.rect(screen, (0,255,0),self.inner_rect)
 
+class productivityBar :
+
+    def __init__(self):
+        self.container_width = 35
+        self.container_height = 100
+        self.container_x = SCREEN_WIDTH-self.container_width
+        self.container_y = 500
+
+        self.inner_width = 25
+        self.inner_height = 1 # this means it's full: self.container_height-10 
+        self.inner_x = self.container_x+(self.container_width-self.inner_width)/2
+        self.inner_y = self.container_y+5
+    
+    def set(self): 
+        self.container_rect = py.rect.Rect(self.container_x, self.container_y, self.container_width, self.container_height)
+        self.inner_rect = py.rect.Rect(self.inner_x, self.inner_y, self.inner_width, self.inner_height)
+
+    def draw(self):
+
+        py.draw.rect(screen, (0,0,0),self.container_rect)
+        py.draw.rect(screen, (0,0,255),self.inner_rect)
+        
+class save_data : 
+    def __init__(self):
+        self.data = {
+            "Tasks_list:" : [],
+            "Time:" : [] 
+        }
+    
+    def save(self) : 
+        self.data["Tasks_list:"] = tasks
+        self.data["Time:"] = currentTime
+
+        df = pd.DataFrame(self.data)
+        df.to_csv('saveFile')
 
 def popup_input():
     msg = psg.popup_get_text("Task: ")
@@ -135,6 +172,19 @@ def bar_percentage() :
     p_bar.set()
     print("percentage: ",(p_bar.container_height-10)*(total_tasks-len(tasks))/total_tasks)
 
+data_saver = pd.read_csv("saveFile")
+
+tasks = data_saver["Tasks_list"]
+
+# try: 
+    
+# except: 
+#     print("empty save file")
+#     data_saver = save_data()
+#     tasks = []
+
+currentTime = date.today()
+print(currentTime)
 
 py.init()
 
@@ -145,8 +195,10 @@ screen.fill(BG_COLOR)
 b_addTask = button(100, 50, SCREEN_WIDTH-150, SCREEN_HEIGHT-100,"+",30)
 t_textField = textField("Add a new task!")
 s_scroll = scroll_able(); 
-p_bar = productive_bar()
+p_bar = progress_bar()
 p_bar.set()
+prod_bar = productivityBar()
+prod_bar.set()
 
 task_height = 0
 total_tasks = 0
@@ -155,7 +207,7 @@ running = True
 
 task_y = 25
 
-tasks = []
+
 
 py.display.flip()
 
@@ -164,6 +216,7 @@ while running :
 
     for event in py.event.get() :
         if event.type == py.QUIT : 
+            data_saver.save()
             running = False; 
         
         if event.type == py.MOUSEWHEEL: 
@@ -207,6 +260,7 @@ while running :
     b_addTask.draw()
     updateTasks(task_y)
     p_bar.draw()
+    prod_bar.draw()
 
     py.display.update()
                                 
