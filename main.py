@@ -50,8 +50,8 @@ class textField:
         self.wrapLength = 250
         self.fontSize = 30
 
-        self.font = py.font.SysFont("Arial", self.fontSize)
-        self.text = self.font.render(self.content, True, (0,0,0), wraplength=self.wrapLength)
+        self.font1 = py.font.SysFont("Arial", self.fontSize)
+        self.text = self.font1.render(self.content, True, (0,0,0), wraplength=self.wrapLength)
 
     def set(self) :
         x = self.x
@@ -133,20 +133,6 @@ class productivityBar :
 
         py.draw.rect(screen, (0,0,0),self.container_rect)
         py.draw.rect(screen, (0,0,255),self.inner_rect)
-        
-class save_data : 
-    def __init__(self):
-        self.data = {
-            "Tasks_list:" : [],
-            "Time:" : [] 
-        }
-    
-    def save(self) : 
-        self.data["Tasks_list:"] = tasks
-        self.data["Time:"] = currentTime
-
-        df = pd.DataFrame(self.data)
-        df.to_csv('saveFile')
 
 def popup_input():
     msg = psg.popup_get_text("Task: ")
@@ -155,6 +141,7 @@ def popup_input():
 def updateTasks(y):
 
     for i in range(0,len(tasks)) : 
+
 
         if i != 0 :
             y += tasks[i-1].text.get_height()+5 
@@ -168,29 +155,60 @@ def updateTasks(y):
         tasks[i].set()
 
 def bar_percentage() :
-    p_bar.inner_height = (p_bar.container_height-10)*(total_tasks-len(tasks))/total_tasks
+    p_bar.inner_height = (p_bar.container_height-10)*(one_day_total_tasks-len(tasks))/one_day_total_tasks
     p_bar.set()
-    print("percentage: ",(p_bar.container_height-10)*(total_tasks-len(tasks))/total_tasks)
+    print("percentage: ",(p_bar.container_height-10)*(one_day_total_tasks-len(tasks))/one_day_total_tasks)
 
-try: 
-    data_saver = pd.read_csv("saveFile")
-    tasks = data_saver["Tasks_list"]
-except: 
-    print("empty save")
-    data_saver = save_data()
-    tasks = []
+def save() : 
 
-currentTime = date.today()
-print(currentTime)
+        # convert all of the tasks button into it's content
+    for i,items in enumerate(tasks) : 
+        tasks[i] = items.content
+
+    df = pd.DataFrame(tasks,columns=['Tasks'])
+    df['Time'] = currentTime.day # save the current day ONLY if it is different from what it was when it started
+    df['TaskLength'] = one_day_total_tasks
+    df.to_csv('saveFile')
+
+def load_file(tasks) :
+
+    currentTime = tasks.at[0,'Time']
+    taskLen = tasks.at[0,'TaskLength']
+    converted_tasks = []
+
+    print("task length: ",taskLen)
+
+    for i in range(0,len(tasks['Tasks'])):
+        
+        print(tasks.at[i,'Tasks'], " : ")
+        converted_tasks.append(textField(str(tasks.at[i,'Tasks'])))
+        
+    print(converted_tasks)
+
+    print("time recorded:", currentTime, " v.s. ", date.today())
+    if int(currentTime) != int(date.today().day) :
+        print("not the same")
+        currentTime = date.today()
+        taskLen = 0 
+
+    return converted_tasks,currentTime,taskLen
 
 py.init()
+
+try: 
+    tasks = pd.read_csv('saveFile')
+    tasks,currentTime,one_day_total_tasks = load_file(tasks)
+except: 
+    print("file empty/non existant")
+    tasks = []
+    currentTime = date.today()
+    one_day_total_tasks = 0
 
 screen = py.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 s_color = (196,238,255)
 screen.fill(BG_COLOR)
 
 b_addTask = button(100, 50, SCREEN_WIDTH-150, SCREEN_HEIGHT-100,"+",30)
-t_textField = textField("Add a new task!")
 s_scroll = scroll_able(); 
 p_bar = progress_bar()
 p_bar.set()
@@ -198,23 +216,29 @@ prod_bar = productivityBar()
 prod_bar.set()
 
 task_height = 0
-total_tasks = 0
 
 running = True
 
 task_y = 25
 
-
-
 py.display.flip()
 
 while running : 
+    screen.fill(s_color)
+    s_scroll.set(-task_y)
+    b_addTask.draw()
+    updateTasks(task_y)
+    p_bar.draw()
+    prod_bar.draw()
+
+    py.display.update()
     # time.sleep(0.1)
 
     for event in py.event.get() :
         if event.type == py.QUIT : 
-            data_saver.save()
+            save()
             running = False; 
+            break
         
         if event.type == py.MOUSEWHEEL: 
             print(event.y)
@@ -238,7 +262,7 @@ while running :
                 print("pressed")
                 tasks.append(textField(popup_input()))
 
-                total_tasks += 1
+                one_day_total_tasks += 1
                 bar_percentage()
                 print(tasks)
 
@@ -248,16 +272,7 @@ while running :
                     if d_tasks.d_button.button.collidepoint(event.pos) :
                         tasks.remove(d_tasks)
                         bar_percentage()
-                        print(total_tasks)
+                        print(one_day_total_tasks)
                         print(len(tasks))
                         
-
-    screen.fill(s_color)
-    s_scroll.set(-task_y)
-    b_addTask.draw()
-    updateTasks(task_y)
-    p_bar.draw()
-    prod_bar.draw()
-
-    py.display.update()
                                 
