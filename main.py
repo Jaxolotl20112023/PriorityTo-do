@@ -1,6 +1,8 @@
 import pygame as py
 import PySimpleGUI as psg
 import time  
+
+from datetime import datetime
 from datetime import date
 import pandas as pd
 
@@ -52,6 +54,9 @@ class textField:
 
         self.font1 = py.font.SysFont("Arial", self.fontSize)
         self.text = self.font1.render(self.content, True, (0,0,0), wraplength=self.wrapLength)
+        
+        self.start_h = datetime.now().hour
+        self.start_m = datetime.now().minute
 
     def set(self) :
         x = self.x
@@ -155,9 +160,9 @@ def updateTasks(y):
         tasks[i].set()
 
 def bar_percentage() :
-    p_bar.inner_height = (p_bar.container_height-10)*(one_day_total_tasks-len(tasks))/one_day_total_tasks
+    p_bar.inner_height = (p_bar.container_height-10)*(total_tasks-len(tasks))/total_tasks
     p_bar.set()
-    print("percentage: ",(p_bar.container_height-10)*(one_day_total_tasks-len(tasks))/one_day_total_tasks)
+    print("percentage: ",(p_bar.container_height-10)*(total_tasks-len(tasks))/total_tasks)
 
 def save() : 
 
@@ -165,9 +170,9 @@ def save() :
     for i,items in enumerate(tasks) : 
         tasks[i] = items.content
 
-    df = pd.DataFrame(tasks,columns=['Tasks'])
-    df['Time'] = currentTime.day # save the current day ONLY if it is different from what it was when it started
-    df['TaskLength'] = one_day_total_tasks
+    df = pd.DataFrame(tasks,columns=['Tasks']) 
+    df['Time'] = date.today().day # save the current day ONLY if it is different from what it was when it started
+    df['TaskLength'] = total_tasks
     df.to_csv('saveFile')
 
 def load_file(tasks) :
@@ -179,17 +184,8 @@ def load_file(tasks) :
     print("task length: ",taskLen)
 
     for i in range(0,len(tasks['Tasks'])):
-        
         print(tasks.at[i,'Tasks'], " : ")
         converted_tasks.append(textField(str(tasks.at[i,'Tasks'])))
-        
-    print(converted_tasks)
-
-    print("time recorded:", currentTime, " v.s. ", date.today())
-    if int(currentTime) != int(date.today().day) :
-        print("not the same")
-        currentTime = date.today()
-        taskLen = 0 
 
     return converted_tasks,currentTime,taskLen
 
@@ -197,12 +193,14 @@ py.init()
 
 try: 
     tasks = pd.read_csv('saveFile')
-    tasks,currentTime,one_day_total_tasks = load_file(tasks)
+    tasks,currentTime,total_tasks = load_file(tasks)
 except: 
     print("file empty/non existant")
     tasks = []
     currentTime = date.today()
-    one_day_total_tasks = 0
+    total_tasks = 0
+
+start = time.perf_counter()
 
 screen = py.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 s_color = (196,238,255)
@@ -211,19 +209,25 @@ screen.fill(BG_COLOR)
 b_addTask = button(100, 50, SCREEN_WIDTH-150, SCREEN_HEIGHT-100,"+",30)
 s_scroll = scroll_able(); 
 p_bar = progress_bar()
-p_bar.set()
 prod_bar = productivityBar()
+
+p_bar.set()
 prod_bar.set()
+bar_percentage()
 
 task_height = 0
-
 running = True
-
 task_y = 25
+
+end = time.perf_counter()
+print("Elapsed time: ", end-start, " seconds")
 
 py.display.flip()
 
 while running : 
+
+    # start = time.perf_counter()
+
     screen.fill(s_color)
     s_scroll.set(-task_y)
     b_addTask.draw()
@@ -241,7 +245,7 @@ while running :
             break
         
         if event.type == py.MOUSEWHEEL: 
-            print(event.y)
+            # print(event.y)
             if event.y < 0: 
                 # print('down')
                 task_y -= 50
@@ -250,7 +254,7 @@ while running :
                 # print('up')
                 task_y += 50
 
-            print(task_y)
+            # print(task_y)
             if task_y > -25:
                 task_y = 25
 
@@ -262,17 +266,23 @@ while running :
                 print("pressed")
                 tasks.append(textField(popup_input()))
 
-                one_day_total_tasks += 1
+                total_tasks += 1
                 bar_percentage()
                 print(tasks)
-
-                
             else :
                 for d_tasks in tasks: 
                     if d_tasks.d_button.button.collidepoint(event.pos) :
+                        d_tasks.
                         tasks.remove(d_tasks)
                         bar_percentage()
-                        print(one_day_total_tasks)
+
+                        if len(tasks) == 0 : 
+                            total_tasks = 0 
+
+                        print(total_tasks)
                         print(len(tasks))
+
+    # end = time.perf_counter()
+    # print("Elapsed time: ", end-start, " seconds")
                         
                                 
