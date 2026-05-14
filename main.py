@@ -45,7 +45,7 @@ class button :
     
 class textField: 
     
-    def __init__(self, content):
+    def __init__(self, content, start_m):
         self.content = content
         self.x = 50
         self.y = 50
@@ -55,8 +55,10 @@ class textField:
         self.font1 = py.font.SysFont("Arial", self.fontSize)
         self.text = self.font1.render(self.content, True, (0,0,0), wraplength=self.wrapLength)
         
-        self.start_h = datetime.now().hour
-        self.start_m = datetime.now().minute
+        if start_m == None: 
+            self.start_m = datetime.now().hour*60 + datetime.now().minute
+        else:
+            self.start_m = start_m 
 
     def set(self) :
         x = self.x
@@ -95,7 +97,7 @@ class scroll_able:
         py.draw.rect(screen, (255,255,255), self.background)
         py.draw.rect(screen, (146,146,146), self.scroll_indicator)
 
-class progress_bar() :
+class progress_bar :
 
     def __init__(self):
         self.container_width = 35
@@ -147,9 +149,9 @@ def updateTasks(y):
 
     for i in range(0,len(tasks)) : 
 
-
         if i != 0 :
             y += tasks[i-1].text.get_height()+5 
+
 
         tasks[i].y = y
         # tasks[i][1] = y
@@ -164,15 +166,24 @@ def bar_percentage() :
     p_bar.set()
     print("percentage: ",(p_bar.container_height-10)*(total_tasks-len(tasks))/total_tasks)
 
+def update_productive(tasks) : 
+    prod_bar.inner_height = 90*(1/((datetime.now().hour*60+datetime.now().minute) - tasks.start_m))
+    prod_bar.set()
+    prod_bar.draw()
+
 def save() : 
+
+    timesMade = []
 
         # convert all of the tasks button into it's content
     for i,items in enumerate(tasks) : 
         tasks[i] = items.content
+        timesMade.append(items.start_m)
 
     df = pd.DataFrame(tasks,columns=['Tasks']) 
     df['Time'] = date.today().day # save the current day ONLY if it is different from what it was when it started
     df['TaskLength'] = total_tasks
+    df['TimeTaskCreated'] = timesMade
     df.to_csv('saveFile')
 
 def load_file(tasks) :
@@ -187,18 +198,25 @@ def load_file(tasks) :
         print(tasks.at[i,'Tasks'], " : ")
         converted_tasks.append(textField(str(tasks.at[i,'Tasks'])))
 
-    return converted_tasks,currentTime,taskLen
+    return converted_tasks,currentTime,taskLen#,tasks['TimeTaskCreated']
 
 py.init()
+
+tasks = pd.read_csv('saveFile')
+tasks,currentTime,total_tasks = load_file(tasks)
+bar_percentage()
 
 try: 
     tasks = pd.read_csv('saveFile')
     tasks,currentTime,total_tasks = load_file(tasks)
+    bar_percentage()
+
 except: 
     print("file empty/non existant")
     tasks = []
     currentTime = date.today()
     total_tasks = 0
+    taskTime = None
 
 start = time.perf_counter()
 
@@ -213,7 +231,7 @@ prod_bar = productivityBar()
 
 p_bar.set()
 prod_bar.set()
-bar_percentage()
+prod_bar.draw()
 
 task_height = 0
 running = True
@@ -264,7 +282,7 @@ while running :
             if b_addTask.button.collidepoint(event.pos) : 
 
                 print("pressed")
-                tasks.append(textField(popup_input()))
+                tasks.append(textField(popup_input(),taskTime))
 
                 total_tasks += 1
                 bar_percentage()
@@ -272,9 +290,10 @@ while running :
             else :
                 for d_tasks in tasks: 
                     if d_tasks.d_button.button.collidepoint(event.pos) :
-                        d_tasks.
+                        
                         tasks.remove(d_tasks)
                         bar_percentage()
+                        update_productive(d_tasks)
 
                         if len(tasks) == 0 : 
                             total_tasks = 0 
