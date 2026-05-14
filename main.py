@@ -10,11 +10,12 @@ import pandas as pd
 SCREEN_WIDTH = 400
 SCREEN_HEIGHT = 750
 BG_COLOR = (196,238,255)
-B_COLOR = (3,180,255)
+BUTTON_COLOR = (3,180,255)
 
 # non-constants
 running = True
 
+# ALL classes used 
 class button : 
 
     def __init__(self, width, height, x, y, content, fontSize):
@@ -39,10 +40,9 @@ class button :
 
         self.button = py.rect.Rect(x,y,width,height)
         
-        py.draw.rect(screen, B_COLOR, self.button) 
+        py.draw.rect(screen, BUTTON_COLOR, self.button) 
         screen.blit(text,(x+self.width/2-text.get_rect().width/2,y+self.height/2-text.get_rect().height/2)) 
-    
-    
+
 class textField: 
     
     def __init__(self, content, start_m):
@@ -56,9 +56,12 @@ class textField:
         self.text = self.font1.render(self.content, True, (0,0,0), wraplength=self.wrapLength)
         
         if start_m == None: 
+            print("no start_m")
             self.start_m = datetime.now().hour*60 + datetime.now().minute
         else:
             self.start_m = start_m 
+            print("start_m exists: ", start_m)
+            
 
     def set(self) :
         x = self.x
@@ -67,7 +70,7 @@ class textField:
 
         text_rect = text.get_rect(topleft=(x,y))
 
-        py.draw.rect(screen, B_COLOR, text_rect)
+        py.draw.rect(screen, BUTTON_COLOR, text_rect)
         screen.blit(text,(x,y))
 
     def add_d_button(self,y) :
@@ -141,11 +144,12 @@ class productivityBar :
         py.draw.rect(screen, (0,0,0),self.container_rect)
         py.draw.rect(screen, (0,0,255),self.inner_rect)
 
+# functions used 
 def popup_input():
     msg = psg.popup_get_text("Task: ")
     return str(msg)
 
-def updateTasks(y):
+def moveTasks(y):
 
     for i in range(0,len(tasks)) : 
 
@@ -162,12 +166,32 @@ def updateTasks(y):
         tasks[i].set()
 
 def bar_percentage() :
+    if total_tasks == None or total_tasks == 0: 
+        return
+
     p_bar.inner_height = (p_bar.container_height-10)*(total_tasks-len(tasks))/total_tasks
     p_bar.set()
-    print("percentage: ",(p_bar.container_height-10)*(total_tasks-len(tasks))/total_tasks)
+    # print("percentage: ",(p_bar.container_height-10)*(total_tasks-len(tasks))/total_tasks)
 
-def update_productive(tasks) : 
-    prod_bar.inner_height = 90*(1/((datetime.now().hour*60+datetime.now().minute) - tasks.start_m))
+def update_productive(current_task) : 
+    timeNow = (datetime.now().hour*60)+(datetime.now().minute)
+    tasks_completed = total_tasks - len(tasks)
+    duration = (timeNow-current_task.start_m)/60
+
+    if duration == None or duration == 0 :
+        return
+
+    content = str((tasks_completed/(duration))*0.01*prod_bar.container_height), " Productivity"
+
+    font = py.font.SysFont('Arial', 20) 
+    text = font.render(str(content), True, (255,255,255))
+
+    screen.blit(text,(0,0))
+
+    print("tasks completed: ", tasks_completed)
+    print("Time in minutes NOW: ", timeNow)
+    print("Time in minutes when CREATED: ", current_task.start_m)
+    print("productivity bar hiehgt: ", prod_bar.inner_height)
     prod_bar.set()
     prod_bar.draw()
 
@@ -196,21 +220,16 @@ def load_file(tasks) :
 
     for i in range(0,len(tasks['Tasks'])):
         print(tasks.at[i,'Tasks'], " : ")
-        converted_tasks.append(textField(str(tasks.at[i,'Tasks'])))
+        converted_tasks.append(textField(str(tasks.at[i,'Tasks']),tasks.at[i,'TimeTaskCreated']))
 
-    return converted_tasks,currentTime,taskLen#,tasks['TimeTaskCreated']
+    return converted_tasks,currentTime,taskLen
 
+# MAIN game/visuals set up and game loop
 py.init()
-
-tasks = pd.read_csv('saveFile')
-tasks,currentTime,total_tasks = load_file(tasks)
-bar_percentage()
 
 try: 
     tasks = pd.read_csv('saveFile')
     tasks,currentTime,total_tasks = load_file(tasks)
-    bar_percentage()
-
 except: 
     print("file empty/non existant")
     tasks = []
@@ -221,7 +240,6 @@ except:
 start = time.perf_counter()
 
 screen = py.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-s_color = (196,238,255)
 screen.fill(BG_COLOR)
 
 b_addTask = button(100, 50, SCREEN_WIDTH-150, SCREEN_HEIGHT-100,"+",30)
@@ -230,6 +248,7 @@ p_bar = progress_bar()
 prod_bar = productivityBar()
 
 p_bar.set()
+bar_percentage()
 prod_bar.set()
 prod_bar.draw()
 
@@ -246,10 +265,10 @@ while running :
 
     # start = time.perf_counter()
 
-    screen.fill(s_color)
+    screen.fill(BG_COLOR)
     s_scroll.set(-task_y)
     b_addTask.draw()
-    updateTasks(task_y)
+    moveTasks(task_y)
     p_bar.draw()
     prod_bar.draw()
 
@@ -282,6 +301,7 @@ while running :
             if b_addTask.button.collidepoint(event.pos) : 
 
                 print("pressed")
+                taskTime = datetime.now().hour*60+datetime.now().minute
                 tasks.append(textField(popup_input(),taskTime))
 
                 total_tasks += 1
