@@ -55,12 +55,8 @@ class textField:
         self.font1 = py.font.SysFont("Arial", self.fontSize)
         self.text = self.font1.render(self.content, True, (0,0,0), wraplength=self.wrapLength)
         
-        if start_m == None: 
-            print("no start_m")
-            self.start_m = datetime.now().hour*60 + datetime.now().minute
-        else:
-            self.start_m = start_m 
-            print("start_m exists: ", start_m)
+        self.start_m = start_m 
+        print("start_m exists: ", start_m)
             
 
     def set(self) :
@@ -126,7 +122,7 @@ class productivityBar :
 
     def __init__(self):
         self.container_width = 35
-        self.container_height = 100
+        self.container_height = 200
         self.container_x = SCREEN_WIDTH-self.container_width
         self.container_y = 500
 
@@ -174,19 +170,14 @@ def bar_percentage() :
     # print("percentage: ",(p_bar.container_height-10)*(total_tasks-len(tasks))/total_tasks)
 
 def update_productive(current_task) : 
-    timeNow = (datetime.now().hour*60)+(datetime.now().minute)
+    timeNow = (datetime.now().hour)+(datetime.now().minute)/60
     tasks_completed = total_tasks - len(tasks)
-    duration = (timeNow-current_task.start_m)/60
+    duration = (timeNow-current_task.start_m)
 
     if duration == None or duration == 0 :
         return
 
-    content = str((tasks_completed/(duration))*0.01*prod_bar.container_height), " Productivity"
-
-    font = py.font.SysFont('Arial', 20) 
-    text = font.render(str(content), True, (255,255,255))
-
-    screen.blit(text,(0,0))
+    prod_bar.inner_height = (tasks_completed/(duration))*0.01*prod_bar.container_height
 
     print("tasks completed: ", tasks_completed)
     print("Time in minutes NOW: ", timeNow)
@@ -251,6 +242,8 @@ p_bar.set()
 bar_percentage()
 prod_bar.set()
 prod_bar.draw()
+# print('tasks: ', tasks)
+update_productive(tasks[len(tasks)-1])
 
 task_height = 0
 running = True
@@ -301,7 +294,7 @@ while running :
             if b_addTask.button.collidepoint(event.pos) : 
 
                 print("pressed")
-                taskTime = datetime.now().hour*60+datetime.now().minute
+                taskTime = datetime.now().hour+datetime.now().minute/60
                 tasks.append(textField(popup_input(),taskTime))
 
                 total_tasks += 1
