@@ -243,7 +243,7 @@ bar_percentage()
 prod_bar.set()
 prod_bar.draw()
 # print('tasks: ', tasks)
-update_productive(tasks[len(tasks)-1])
+# update_productive(tasks[len(tasks)-1])
 
 task_height = 0
 running = True
