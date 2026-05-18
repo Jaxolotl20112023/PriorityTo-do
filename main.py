@@ -207,6 +207,9 @@ def load_file(tasks) :
     taskLen = tasks.at[0,'TaskLength']
     converted_tasks = []
 
+    if currentTime - datetime.now().day != 0:
+        taskLen = 0
+
     print("task length: ",taskLen)
 
     for i in range(0,len(tasks['Tasks'])):
